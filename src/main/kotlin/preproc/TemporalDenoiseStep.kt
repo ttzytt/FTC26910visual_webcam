@@ -28,6 +28,10 @@ class TemporalDenoiserStep(
     private var coordinateGridX: Mat? = null
     private var coordinateGridY: Mat? = null
 
+    init {
+        setDbgOptions(listOf("flow", "warp", "diff", "mask", "output"), initDebug)
+    }
+
     override fun process(image: Mat): Mat {
         // 0) Initialize coordinate grids if needed.
         if (coordinateGridX == null || coordinateGridY == null) {

@@ -6,7 +6,6 @@ import org.opencv.core.Mat
 import org.opencv.core.Scalar
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
-import org.webcam_visual.algos.TemporalDenoiser
 import org.webcam_visual.utils.*
 
 // Auto white balance.
@@ -209,12 +208,5 @@ class ScaleStep(private val factorX: Double, private val factorY: Double, privat
         Imgproc.resize(image, result, Size(), factorX, factorY, interp)
         if (isDbgOptionEnabled("output")) addDbgEntry("output", result.clone())
         return result
-    }
-}
-
-class TemporayDenoiserStep(private val threshold: Double, private val alpha: Double, initDebug: Boolean = false) : PreprocStep("temporal_denoiser", initDebug) {
-    private val denoiser = TemporalDenoiser(alpha, threshold)
-    override fun process(image: Mat): Mat {
-        return denoiser.processFrame(image)
     }
 }
