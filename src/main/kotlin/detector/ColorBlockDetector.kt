@@ -53,8 +53,8 @@ class ColorDetector(
     /**
      * Implementation of the BlockDetector interface.
      */
-    override fun detectBlocks(ctx: FrameCtx): List<Block> {
-        return processFrame(ctx.frame)
+    override fun detectBlocks(ctx: FrameCtx): FrameCtx {
+        return ctx.copy(curBlocks = processFrame(ctx.frame))
     }
 
     /**

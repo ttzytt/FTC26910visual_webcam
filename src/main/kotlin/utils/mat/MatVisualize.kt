@@ -70,3 +70,30 @@ fun createColorMappedImageWithLegend(
 
     return coloredDist to colorBar
 }
+
+
+/**
+ * Draws optical flow vectors as arrows on a blank image.
+ *
+ * @param flow The optical flow matrix (CV_32FC2).
+ * @param step The grid step size for sampling flow vectors.
+ * @return A visualization image (CV_8UC3) with arrows drawn.
+ */
+fun drawFlowArrows(flow: Mat, step: Int): Mat {
+    // Create a blank image (black) with same size as flow.
+    val vis = Mat.zeros(flow.size(), CvType.CV_8UC3)
+    val rows = flow.rows()
+    val cols = flow.cols()
+    for (y in 0 until rows step step) {
+        for (x in 0 until cols step step) {
+            val flowAt = flow.get(y, x)
+            val dx = flowAt[0]
+            val dy = flowAt[1]
+            val pt1 = Point(x.toDouble(), y.toDouble())
+            val pt2 = Point(x + dx, y + dy)
+            // Draw an arrowed line in green.
+            Imgproc.arrowedLine(vis, pt1, pt2, Scalar(0.0, 255.0, 0.0), 1)
+        }
+    }
+    return vis
+}

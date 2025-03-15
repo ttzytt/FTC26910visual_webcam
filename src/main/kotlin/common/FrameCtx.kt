@@ -16,11 +16,12 @@ import org.webcam_visual.utils.mat.times
  * @property colorDisAfterMvec The per-pixel color difference (CV_32FC1) between frame and warpedByMvec.
  */
 data class FrameCtx(
-    val frame: Mat,
+    var frame: Mat,
     var prevFrame: Mat? = null,
     var opticFlow: Mat? = null,
     var warpedByMvec: Mat? = null,
     var colorDisAfterMvec: Mat? = null,
+    var curBlocks : List<Block>? = null,
     var prevBlocks : List<Block>? = null
 ) {
     /**
@@ -94,6 +95,16 @@ data class FrameCtx(
             colorDisAfterMvec = distMat
         }
         return colorDisAfterMvec!!
+    }
+
+    fun updateFrame(nextFrame: Mat) {
+        prevFrame = frame
+        frame = nextFrame
+        opticFlow = null
+        warpedByMvec = null
+        colorDisAfterMvec = null
+        prevBlocks = curBlocks
+        curBlocks = null
     }
 
 }

@@ -44,7 +44,7 @@ fun main() {
     }
 
     val frame = Mat()
-    val ctx = FrameCtx(frame)
+    var ctx = FrameCtx(frame)
     SwingUtilities.invokeLater {
         DebugTreeGUI(rootImgDbg){frame}  // The tree GUI for toggling steps & debug options
     }
@@ -54,13 +54,13 @@ fun main() {
             break
         }
         val st = System.currentTimeMillis()
-        val processed = preprocPipeline.process(ctx)
+        ctx = preprocPipeline.process(ctx)
         val ed = System.currentTimeMillis()
-        ctx.prevFrame = processed.frame.clone()
-        var blocks = detector.detectBlocks(processed)
-        visualizer.visualizeBlocks(ctx.frame, blocks)
-        blocks = tracker.trackBlocks(ctx, blocks)
-        trackedVisualizer.visualizeBlocks(ctx.frame, blocks)
+        ctx = detector.detectBlocks(ctx)
+        visualizer.visualizeBlocks(ctx)
+        ctx = tracker.trackBlocks(ctx)
+        trackedVisualizer.visualizeBlocks(ctx)
+        ctx.updateFrame(frame.clone())
         println("Processed frame in ${ed - st} ms.")
     }
 

@@ -7,6 +7,7 @@ import org.opencv.core.Scalar
 import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import org.webcam_visual.common.Block
+import org.webcam_visual.common.FrameCtx
 import org.webcam_visual.common.ImgDebuggable
 
 /**
@@ -34,7 +35,9 @@ class BlockVisualizer : ImgDebuggable {
      * @param blocks The list of detected blocks.
      * @return A new Mat with all blocks visualized.
      */
-    fun visualizeBlocks(frame: Mat, blocks: List<Block>): Mat {
+    fun visualizeBlocks(ctx: FrameCtx): Mat {
+        val frame = ctx.frame
+        val blocks = ctx.curBlocks ?: return frame
         val output = frame.clone()
 
         for ((_, block) in blocks.withIndex()) {

@@ -4,7 +4,9 @@ import org.opencv.core.Mat
 import org.opencv.core.Point
 import org.opencv.imgproc.Imgproc
 import org.webcam_visual.common.Block
+import org.webcam_visual.common.DefaultImgDebuggable
 import org.webcam_visual.common.FrameCtx
+import org.webcam_visual.common.ImgDebuggable
 import java.util.*
 
 /**
@@ -42,21 +44,20 @@ class BlockTracker(val config: Cfg = Cfg()) {
      * Tracks blocks between the previous and current frame.
      *
      * @param ctx The current frame context; its prevBlocks field holds blocks from the previous frame.
-     * @param currentBlocks List of blocks detected in the current frame.
      * @return List of blocks for the current frame, with IDs assigned.
      */
-    fun trackBlocks(ctx: FrameCtx, currentBlocks: List<Block>): List<Block> {
+    fun trackBlocks(ctx: FrameCtx): FrameCtx {
         // For the first frame, simply assign incremental IDs.
         if (ctx.prevBlocks == null) {
-            val tracked = currentBlocks.map { block ->
+            val tracked = ctx.curBlocks!!.map { block ->
                 block.copy(id = nextId)
             }
             ctx.prevBlocks = tracked
-            return tracked
+            return ctx.copy(curBlocks = tracked)
         } else {
             // Get the optical flow computed in the FrameCtx.
             val flow = ctx.ensureOpticFlow()
-            val tracked = currentBlocks.map { currBlock ->
+            val tracked = ctx.curBlocks!!.map { currBlock ->
                 // Generate sample points inside the current block.
                 val samples = samplePointsInBlock(currBlock, config.sampleCount, config.shrinkFactor)
                 var bestCandidate: Block? = null
@@ -94,7 +95,7 @@ class BlockTracker(val config: Cfg = Cfg()) {
                 }
             }
             ctx.prevBlocks = tracked
-            return tracked
+            return ctx.copy(curBlocks = tracked)
         }
     }
 

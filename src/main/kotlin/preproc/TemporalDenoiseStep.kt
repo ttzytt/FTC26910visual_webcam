@@ -3,6 +3,7 @@ package org.webcam_visual.preproc
 import org.opencv.core.*
 import org.webcam_visual.common.FrameCtx
 import org.webcam_visual.utils.mat.createColorMappedImageWithLegend
+import org.webcam_visual.utils.mat.drawFlowArrows
 import org.webcam_visual.utils.mat.gt
 
 /**
@@ -32,6 +33,12 @@ class TemporalDenoiserStep(
         if (ctx.prevFrame == null) {
             return ctx.frame.clone()
         }
+
+        if (isDbgOptionEnabled("flow")){
+            val flowVis = drawFlowArrows(ctx.ensureOpticFlow(), flowGridStep)
+            addDbgEntry("flow", flowVis)
+        }
+
         // If debug option "diff" is enabled, generate a color-mapped visualization.
         if (isDbgOptionEnabled("diff")) {
             val (colorDiff, colorBar) = createColorMappedImageWithLegend(ctx.ensureColorDisAfterMvec())
