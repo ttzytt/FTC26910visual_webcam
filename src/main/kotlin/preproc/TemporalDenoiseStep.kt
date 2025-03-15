@@ -3,6 +3,7 @@ import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 import org.opencv.video.DISOpticalFlow
 import org.webcam_visual.preproc.PreprocStep
+import org.webcam_visual.utils.createColorMappedDiffAndBar
 import org.webcam_visual.utils.gt  // assuming you have defined the infix "gt" operator
 import kotlin.math.roundToInt
 
@@ -19,7 +20,7 @@ class TemporalDenoiserStep(
     private val flowGridStep: Int = 20         // Grid step size for flow visualization.
 ) : PreprocStep("temporal_denoise") {
 
-    private val disOptFlow: DISOpticalFlow = DISOpticalFlow.create(DISOpticalFlow.PRESET_FAST)
+    private val disOptFlow: DISOpticalFlow = DISOpticalFlow.create(DISOpticalFlow.PRESET_ULTRAFAST)
     private var prevFrame: Mat? = null   // Previous frame (BGR)
     private var prevGray: Mat? = null    // Grayscale version of previous frame
     private var flow: Mat? = null        // Optical flow (CV_32FC2)
@@ -99,9 +100,15 @@ class TemporalDenoiserStep(
         // Compute element-wise square root.
         val distMat = Mat()
         Core.sqrt(sumOfSquares, distMat)
-        if (isDbgOptionEnabled("diff"))
-            addDbgEntry("diff", distMat.clone())
-
+        if (isDbgOptionEnabled("diff")) {
+            val (colorDiff, colorBar) = createColorMappedDiffAndBar(distMat)
+            val roi = colorDiff.submat(
+                0, colorBar.rows(),
+                colorDiff.cols() - colorBar.cols(), colorDiff.cols()
+            )
+            colorBar.copyTo(roi)
+            addDbgEntry("diff", colorDiff)
+        }
         // 6) Build a mask: where the distance is greater than the threshold.
         val mask = distMat gt Scalar(threshold)
         if (isDbgOptionEnabled("mask"))

@@ -5,95 +5,65 @@ import org.opencv.core.Mat
 import org.webcam_visual.ImgDebuggable
 import java.awt.BorderLayout
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
-import java.awt.image.BufferedImage
 import javax.swing.*
 import javax.swing.tree.*
 
-/**
- * A Swing-based UI that shows a hierarchy of ImgDebuggable components in a JTree,
- * along with each component's debug-option keys.  Toggling a component node
- * hides/shows its children; toggling a debug-option node enables/disables that debug option.
- *
- * Additionally, when a debug option is toggled ON, this code will open a small
- * DebugImageWindow to display the corresponding debug image (if available). Toggling OFF closes it.
- */
 class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Controls") {
 
-    // Tracks whether each ImgDebuggable is "expanded" (true => show children in the tree).
-    private val expandedStates: MutableMap<ImgDebuggable, Boolean> = mutableMapOf()
+    // Whether each ImgDebuggable is "expanded" in the tree view (not the same as "enabled").
+    private val expandedStates = mutableMapOf<ImgDebuggable, Boolean>()
 
-    // JTree that displays everything.
-    private val tree: JTree
-
-    // The backing model for the JTree
-    private var treeModel: DefaultTreeModel? = null
-
-    // Keeps track of each (debugObj, optionKey) -> debug window, so we can close it if toggled OFF.
+    // Track open debug windows: (debuggable, optionKey) -> window
     private val debugWindows = mutableMapOf<Pair<ImgDebuggable, String>, DebugImageWindow>()
 
-    init {
-        // Default the root node to "expanded"
-        expandedStates[rootDebuggable] = true
+    private val tree: JTree
+    private var treeModel: DefaultTreeModel? = null
 
-        // Create and configure the JTree
+    init {
+        expandedStates[rootDebuggable] = true
         tree = JTree().apply {
             cellRenderer = CheckBoxNodeRenderer()
-            cellEditor   = CheckBoxNodeEditor()
-            isEditable   = true
+            cellEditor = CheckBoxNodeEditor()
+            isEditable = true
             showsRootHandles = true
             expandsSelectedPaths = true
         }
 
-        refreshTree() // Build the initial tree model
-
-        val scrollPane = JScrollPane(tree)
-        contentPane.add(scrollPane, BorderLayout.CENTER)
-
+        refreshTree()
+        contentPane.add(JScrollPane(tree), BorderLayout.CENTER)
         setSize(500, 600)
         defaultCloseOperation = EXIT_ON_CLOSE
         setLocationRelativeTo(null)
         isVisible = true
     }
 
-    /**
-     * Rebuilds the entire tree model from scratch, based on the expanded states
-     * and debug options. Then sets this as the JTree's model and expands rows.
-     */
     fun refreshTree() {
         val rootNode = DebuggableNode(rootDebuggable)
         treeModel = DefaultTreeModel(rootNode as TreeNode)
         tree.model = treeModel
 
-        // Expand all rows for convenience
         for (i in 0 until tree.rowCount) {
             tree.expandRow(i)
         }
     }
 
-    // ---------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
     // Node Classes
-    // ---------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
 
-    /**
-     * Represents an entire ImgDebuggable object in the tree (a parent node).
-     * If 'expandedStates[debuggable]' is true, we add:
-     *  - A child node for each debug-option key
-     *  - Child subnodes for each child ImgDebuggable
-     */
     inner class DebuggableNode(val debuggable: ImgDebuggable) : CheckBoxTreeNode() {
 
         init {
-            userObject = debuggable
+            setUserObject(debuggable)
+            val showChildren = expandedStates.getOrDefault(debuggable, true)
+
             // Add child debug-option nodes
             debuggable.availableDbgOptions.keys.forEach { key ->
                 add(DebugOptionNode(debuggable, key))
             }
-
-            // If expanded: add child ImgDebuggable nodes as well
-            val showChildren = expandedStates.getOrDefault(debuggable, true)
+            // Recursively add child ImgDebuggable nodes if expanded
             if (showChildren) {
                 debuggable.dbgChildren.forEach { child ->
                     add(DebuggableNode(child))
@@ -102,27 +72,22 @@ class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Co
         }
 
         override fun toString(): String {
-            // Attempt a friendly name from class's simpleName, fallback to getClass name
             val cname = debuggable::class.simpleName ?: debuggable.javaClass.simpleName
             return cname ?: "(Unnamed Debuggable)"
         }
     }
 
-    /**
-     * Represents a single debug option within some ImgDebuggable. This is a leaf node.
-     */
     inner class DebugOptionNode(val debugObj: ImgDebuggable, val optionKey: String) : CheckBoxTreeNode() {
         init {
-            userObject = optionKey
+            setUserObject(optionKey)
             allowsChildren = false
         }
-
         override fun toString(): String = optionKey
     }
 
-    // ---------------------------------------------------------------------------------------
-    // Custom TreeCellRenderer that displays JCheckBoxes
-    // ---------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // RENDERER
+    // ---------------------------------------------------------------------------
 
     private inner class CheckBoxNodeRenderer : TreeCellRenderer {
         private val checkBox = JCheckBox()
@@ -137,47 +102,43 @@ class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Co
             hasFocus: Boolean
         ): Component {
             if (value !is CheckBoxTreeNode) {
-                // Fallback to default (should rarely happen)
-                val defRenderer = DefaultTreeCellRenderer()
-                return defRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+                return DefaultTreeCellRenderer().getTreeCellRendererComponent(
+                    tree, value, selected, expanded, leaf, row, hasFocus
+                )
             }
-
             when (value) {
                 is DebuggableNode -> {
-                    val compDbg = value.debuggable
                     checkBox.text = value.toString()
-                    checkBox.isSelected = expandedStates.getOrDefault(compDbg, true)
-                    // Always enabled for toggling
+                    // A parent node's "selected" means "all children ON"
+                    val dbg = value.debuggable
+                    checkBox.isSelected = areAllChildrenOn(dbg)
                     checkBox.isEnabled = true
                 }
                 is DebugOptionNode -> {
                     checkBox.text = value.optionKey
+                    // A child node's "selected" means the actual debug option is ON
                     checkBox.isSelected = value.debugObj.isDbgOptionEnabled(value.optionKey)
-
-                    // If the parent is toggled OFF, disable this child
+                    // If parent is toggled OFF, optionally disable (or you can leave them clickable).
                     val parentDbg = findAncestorDebuggable(value)
-                    checkBox.isEnabled = parentDbg?.let { expandedStates[it] } ?: true
+                    val parentEnabled = parentDbg?.let { areAllChildrenOn(it) } ?: true
+                    checkBox.isEnabled = parentEnabled
                 }
             }
             return checkBox
         }
-
-        /**
-         * Find the nearest ancestor that is a DebuggableNode (returns its ImgDebuggable).
-         */
         private fun findAncestorDebuggable(node: CheckBoxTreeNode): ImgDebuggable? {
-            var parent = node.parent
-            while (parent != null) {
-                if (parent is DebuggableNode) return parent.debuggable
-                parent = parent.parent
+            var p = node.parent
+            while (p != null) {
+                if (p is DebuggableNode) return p.debuggable
+                p = p.parent
             }
             return null
         }
     }
 
-    // ---------------------------------------------------------------------------------------
-    // Custom TreeCellEditor that handles the toggling logic
-    // ---------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // EDITOR (handles toggling)
+    // ---------------------------------------------------------------------------
 
     private inner class CheckBoxNodeEditor : AbstractCellEditor(), TreeCellEditor {
         private val checkBox = JCheckBox()
@@ -186,7 +147,6 @@ class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Co
         init {
             checkBox.addActionListener(object : ActionListener {
                 override fun actionPerformed(e: ActionEvent?) {
-                    // User toggled the checkbox => commit now
                     stopCellEditing()
                 }
             })
@@ -201,10 +161,12 @@ class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Co
             row: Int
         ): Component {
             currentNode = value as? CheckBoxTreeNode
+
             if (value is DebuggableNode) {
-                val dbg = value.debuggable
                 checkBox.text = value.toString()
-                checkBox.isSelected = expandedStates.getOrDefault(dbg, true)
+                val dbg = value.debuggable
+                // This parent is considered "on" if all children are on
+                checkBox.isSelected = areAllChildrenOn(dbg)
             } else if (value is DebugOptionNode) {
                 checkBox.text = value.optionKey
                 checkBox.isSelected = value.debugObj.isDbgOptionEnabled(value.optionKey)
@@ -213,46 +175,130 @@ class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Co
         }
 
         override fun getCellEditorValue(): Any {
+            val newValue = checkBox.isSelected
             currentNode?.let { node ->
                 when (node) {
                     is DebuggableNode -> {
-                        val dbg = node.debuggable
-                        val newValue = checkBox.isSelected
-                        expandedStates[dbg] = newValue
-                        // Refresh the tree structure to show/hide child nodes
-                        SwingUtilities.invokeLater { refreshTree() }
+                        // Toggling a parent => recursively set all child debug options ON/OFF
+                        toggleDebuggableRecursively(node.debuggable, newValue)
+                        // Also update expanded state for display
+                        expandedStates[node.debuggable] = newValue
                     }
                     is DebugOptionNode -> {
+                        // Toggling a child => set this single debug option
                         val wasEnabled = node.debugObj.isDbgOptionEnabled(node.optionKey)
-                        val newEnabled = checkBox.isSelected
-                        node.debugObj.setDbgOption(node.optionKey, newEnabled)
-
-                        // If turning debug option ON => open debug window. If OFF => close it.
-                        if (newEnabled && !wasEnabled) {
+                        node.debugObj.setDbgOption(node.optionKey, newValue)
+                        if (newValue && !wasEnabled) {
                             openDebugWindow(node.debugObj, node.optionKey)
-                        } else if (!newEnabled && wasEnabled) {
+                        } else if (!newValue && wasEnabled) {
                             closeDebugWindow(node.debugObj, node.optionKey)
                         }
+
+                        // After toggling one child, we might need to update the parent(s):
+                        syncParentStatesUp(node)
                     }
+                }
+                SwingUtilities.invokeLater {
+                    refreshTree()
                 }
             }
             return currentNode ?: ""
         }
     }
 
-    // ---------------------------------------------------------------------------------------
-    // Debug Window Logic
-    // ---------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------
+    // Recursive Toggling Helpers
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Recursively toggles an entire debug object:
+     *  - sets all debug-options in [debuggable] to [newVal].
+     *  - if [newVal] is false, close windows. if [newVal] is true, open windows for all child options.
+     *  - recurses into child debuggables as well.
+     */
+    private fun toggleDebuggableRecursively(debuggable: ImgDebuggable, newVal: Boolean) {
+        // Toggle all debug options in this debuggable
+        for (optionKey in debuggable.availableDbgOptions.keys) {
+            val wasEnabled = debuggable.isDbgOptionEnabled(optionKey)
+            debuggable.setDbgOption(optionKey, newVal)
+            if (newVal && !wasEnabled) {
+                openDebugWindow(debuggable, optionKey)
+            } else if (!newVal && wasEnabled) {
+                closeDebugWindow(debuggable, optionKey)
+            }
+        }
+        // Recurse into child components
+        for (child in debuggable.dbgChildren) {
+            toggleDebuggableRecursively(child, newVal)
+        }
+    }
+
+    /**
+     * After toggling a single child, we climb up the tree to see if:
+     *  - All siblings are ON => parent is ON
+     *  - Otherwise => parent is OFF
+     * Then we keep going up until the root.
+     */
+    private fun syncParentStatesUp(childNode: CheckBoxTreeNode) {
+        var parent = childNode.parent
+        while (parent is DebuggableNode) {
+            val dbg = parent.debuggable
+            val allOn = areAllChildrenOn(dbg)
+            // If parent's state doesn't match 'allOn', flip it and recursively toggle if needed
+            val parentCurrentlyAllOn = areAllDebugOptionsEnabled(dbg) && areAllChildrenParentsOn(dbg)
+            if (allOn != parentCurrentlyAllOn) {
+                // We flip the entire parent's toggles
+                toggleDebuggableRecursively(dbg, allOn)
+            }
+            parent = parent.parent
+        }
+    }
+
+    /**
+     * Returns true if *all* debug options in [debuggable] are currently ON
+     * and also all of its child debug options (recursively) are ON.
+     */
+    private fun areAllChildrenOn(debuggable: ImgDebuggable): Boolean {
+        // 1) Check this debuggable's own debug options
+        for ((optionKey, enabled) in debuggable.availableDbgOptions) {
+            if (!enabled) return false
+        }
+        // 2) Recurse into child debuggables
+        for (child in debuggable.dbgChildren) {
+            if (!areAllChildrenOn(child)) return false
+        }
+        return true
+    }
+
+    /**
+     * Returns true if *every* debugOption in this single debug object is ON.
+     * This does NOT check child debugglables. (Helper used in syncParentStatesUp)
+     */
+    private fun areAllDebugOptionsEnabled(dbg: ImgDebuggable): Boolean {
+        for (opt in dbg.availableDbgOptions.values) {
+            if (!opt) return false
+        }
+        return true
+    }
+
+    /**
+     * Returns true if all direct child debuggables are fully ON (recursively).
+     */
+    private fun areAllChildrenParentsOn(dbg: ImgDebuggable): Boolean {
+        for (child in dbg.dbgChildren) {
+            if (!areAllChildrenOn(child)) return false
+        }
+        return true
+    }
+
+    // ---------------------------------------------------------------------------
+    // Debug Windows
+    // ---------------------------------------------------------------------------
 
     private fun openDebugWindow(debuggable: ImgDebuggable, optionKey: String) {
         val key = debuggable to optionKey
-        // If already open, just bring to front
-        debugWindows[key]?.let {
-            it.requestFocus()
-            return
-        }
-        // Otherwise create new window
-        val frame = DebugImageWindow("$optionKey Debug",{
+        debugWindows[key]?.let { it.requestFocus(); return }
+        val frame = DebugImageWindow("$optionKey Debug", {
             debuggable.dbgData[optionKey]
         })
         debugWindows[key] = frame
@@ -265,8 +311,7 @@ class DebugTreeGUI(private val rootDebuggable: ImgDebuggable) : JFrame("Debug Co
 }
 
 /**
- * Base class for nodes in the JTree that use checkboxes.
- * Subclasses override `toString()` or store relevant userObject data.
+ * Base class for checkbox tree nodes.
  */
 open class CheckBoxTreeNode : DefaultMutableTreeNode() {
     override fun isLeaf(): Boolean = !allowsChildren
