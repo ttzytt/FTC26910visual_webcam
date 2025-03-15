@@ -4,9 +4,7 @@ import org.opencv.core.Mat
 import org.opencv.core.Point
 import org.opencv.imgproc.Imgproc
 import org.webcam_visual.common.Block
-import org.webcam_visual.common.DefaultImgDebuggable
 import org.webcam_visual.common.FrameCtx
-import org.webcam_visual.common.ImgDebuggable
 import java.util.*
 
 /**
@@ -32,12 +30,12 @@ class BlockTracker(val config: Cfg = Cfg()) {
      *
      * @property sampleCount Number of sample points to generate inside each block.
      * @property matchThreshold Fraction (0.0–1.0) of sample points that must match a previous block.
-     * @property shrinkFactor Multiplier (<1.0) to shrink the block's size when sampling points.
+     * @property sampleAreaFactor Multiplier (<1.0) to shrink the block's size when sampling points.
      */
     data class Cfg(
-        val sampleCount: Int = 20,
-        val matchThreshold: Double = 0.7,
-        val shrinkFactor: Double = 0.8
+        val sampleCount: Int = 35,
+        val matchThreshold: Double = 0.4,
+        val sampleAreaFactor: Double = .7
     )
 
     /**
@@ -59,7 +57,7 @@ class BlockTracker(val config: Cfg = Cfg()) {
             val flow = ctx.ensureOpticFlow()
             val tracked = ctx.curBlocks!!.map { currBlock ->
                 // Generate sample points inside the current block.
-                val samples = samplePointsInBlock(currBlock, config.sampleCount, config.shrinkFactor)
+                val samples = samplePointsInBlock(currBlock, config.sampleCount, config.sampleAreaFactor)
                 var bestCandidate: Block? = null
                 var bestFraction = 0.0
                 // Look for candidate blocks in the previous frame that have the same color.
@@ -80,6 +78,7 @@ class BlockTracker(val config: Cfg = Cfg()) {
                             }
                         }
                         val fraction = count.toDouble() / samples.size
+                        println("Fraction: $fraction")
                         if (fraction >= config.matchThreshold && fraction > bestFraction) {
                             bestCandidate = prevBlock
                             bestFraction = fraction

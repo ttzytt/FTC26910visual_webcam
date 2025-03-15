@@ -30,6 +30,7 @@ data class FrameCtx(
      * (Assumes both frames are in BGR; converts them to grayscale before computation.)
      */
     fun ensureOpticFlow(): Mat {
+        assert(prevFrame != null) { "prevFrame must be set before computing optical flow." }
         if (opticFlow == null) {
             val currGray = Mat()
             val prevGray = Mat()
