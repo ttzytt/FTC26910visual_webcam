@@ -1,4 +1,4 @@
-package org.webcam_visual
+package org.webcam_visual.common
 
 import org.opencv.core.Mat
 
@@ -64,6 +64,10 @@ interface ImgDebuggable {
     fun addDbgChild(child: ImgDebuggable) {
         dbgChildren.add(child)
     }
+
+    fun addDbgChildren(children: List<ImgDebuggable>) {
+        dbgChildren.addAll(children)
+    }
 }
 
 
@@ -71,4 +75,10 @@ open class DefaultImgDebuggable : ImgDebuggable {
     override val availableDbgOptions: MutableMap<String, Boolean> = mutableMapOf()
     override val dbgData: MutableMap<String, Mat> = mutableMapOf()
     override val dbgChildren: MutableList<ImgDebuggable> = mutableListOf()
+}
+
+class RootImgDebuggable(vararg children: ImgDebuggable): DefaultImgDebuggable(){
+    init {
+        children.forEach { addDbgChild(it) }
+    }
 }

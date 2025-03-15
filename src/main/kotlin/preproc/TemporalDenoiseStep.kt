@@ -1,11 +1,9 @@
 package org.webcam_visual.preproc
 
 import org.opencv.core.*
-import org.opencv.imgproc.Imgproc
-import org.opencv.video.DISOpticalFlow
 import org.webcam_visual.common.FrameCtx
-import org.webcam_visual.utils.createColorMappedImageWithLegend
-import org.webcam_visual.utils.gt
+import org.webcam_visual.utils.mat.createColorMappedImageWithLegend
+import org.webcam_visual.utils.mat.gt
 
 /**
  * TemporalDenoiserStep uses DIS optical flow and temporal blending.

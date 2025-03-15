@@ -1,9 +1,8 @@
 package org.webcam_visual.preproc
 
 import org.opencv.core.Mat
-import org.webcam_visual.ImgDebuggable
+import org.webcam_visual.common.ImgDebuggable
 import org.webcam_visual.common.FrameCtx
-import java.awt.Frame
 
 class PreprocPipeline(
     vararg steps: PreprocStep

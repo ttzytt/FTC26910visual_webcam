@@ -1,4 +1,4 @@
-package org.webcam_visual.utils
+package org.webcam_visual.utils.mat
 
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc

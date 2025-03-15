@@ -2,9 +2,10 @@ package org.webcam_visual.preproc
 
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
-import org.opencv.video.DISOpticalFlow
 import org.webcam_visual.common.FrameCtx
-import org.webcam_visual.utils.*
+import org.webcam_visual.utils.mat.div
+import org.webcam_visual.utils.mat.minus
+import org.webcam_visual.utils.mat.times
 
 // ------------------------
 // Auto White Balance Step

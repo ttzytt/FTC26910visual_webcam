@@ -1,7 +1,7 @@
 package org.webcam_visual.preproc
 
 import org.opencv.core.Mat
-import org.webcam_visual.DefaultImgDebuggable
+import org.webcam_visual.common.DefaultImgDebuggable
 import org.webcam_visual.common.FrameCtx
 
 abstract class PreprocStep(val stepName: String, val initDebug: Boolean = false) : DefaultImgDebuggable() {

@@ -2,14 +2,16 @@ package org.webcam_visual
 
 import org.opencv.core.Core
 import org.opencv.core.Mat
-import org.opencv.imgproc.Imgproc
 import org.opencv.videoio.VideoCapture
+import org.webcam_visual.common.COLOR_DEF_R9000P
 import org.webcam_visual.common.FrameCtx
-import org.webcam_visual.display.DebugTreeGUI
+import org.webcam_visual.common.RootImgDebuggable
+import org.webcam_visual.detectors.ColorDetector
+import org.webcam_visual.gui.DebugTreeGUI
 import org.webcam_visual.preproc.BilateralFilterStep
 import org.webcam_visual.preproc.PreprocPipeline
 import org.webcam_visual.preproc.TemporalDenoiserStep
-import javax.swing.JFrame
+import org.webcam_visual.visualizer.BlockVisualizer
 import javax.swing.SwingUtilities
 
 fun main() {
@@ -18,14 +20,23 @@ fun main() {
 
     // 2) Create our pipeline with the desired steps.
     //    PreprocPipeline should implement ImgDebuggable so the DebugTreeGUI can introspect it.
-    val pipeline = PreprocPipeline(
+
+    val preprocPipeline = PreprocPipeline(
         BilateralFilterStep(11, 50.0, 2.0),
         TemporalDenoiserStep(0.7, 30.0),
     )
+    val detector = ColorDetector(COLOR_DEF_R9000P)
+    val visualizer = BlockVisualizer()
+    val rootImgDbg = RootImgDebuggable(
+        preprocPipeline,
+        detector,
+        visualizer
+    )
+
 
     // 3) Launch a debug GUI showing the entire pipeline's structure & debug toggles.
     SwingUtilities.invokeLater {
-        DebugTreeGUI(pipeline)  // The tree GUI for toggling steps & debug options
+        DebugTreeGUI(rootImgDbg)  // The tree GUI for toggling steps & debug options
     }
 
     // 5) Open a webcam capture & process frames in a loop.
@@ -43,9 +54,11 @@ fun main() {
             break
         }
         val st = System.currentTimeMillis()
-        val processed = pipeline.process(ctx)
+        val processed = preprocPipeline.process(ctx)
         val ed = System.currentTimeMillis()
         ctx.prevFrame = processed.frame.clone()
+        val blocks = detector.detectBlocks(processed)
+        visualizer.visualizeBlocks(ctx.frame, blocks)
         println("Processed frame in ${ed - st} ms.")
     }
 

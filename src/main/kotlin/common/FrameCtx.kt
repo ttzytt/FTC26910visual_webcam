@@ -3,7 +3,8 @@ package org.webcam_visual.common
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 import org.opencv.video.DISOpticalFlow
-import org.webcam_visual.utils.*  // Import custom operators like plus, times, etc.
+import org.webcam_visual.utils.mat.plus
+import org.webcam_visual.utils.mat.times
 
 /**
  * FrameCtx holds intermediate results for a frame.
