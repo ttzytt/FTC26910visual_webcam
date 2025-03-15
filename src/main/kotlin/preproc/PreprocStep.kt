@@ -2,6 +2,7 @@ package org.webcam_visual.preproc
 
 import org.opencv.core.Mat
 import org.webcam_visual.DefaultImgDebuggable
+import org.webcam_visual.common.FrameCtx
 
 abstract class PreprocStep(val stepName: String, val initDebug: Boolean = false) : DefaultImgDebuggable() {
     init {
@@ -9,5 +10,10 @@ abstract class PreprocStep(val stepName: String, val initDebug: Boolean = false)
         setDbgOption("output", initDebug)
     }
 
-    abstract fun process(image: Mat): Mat
+    fun process(ctx: FrameCtx): FrameCtx{
+        val result = _process(ctx)
+        if (isDbgOptionEnabled("output")) addDbgEntry("output", result.clone())
+        return ctx.copy(frame = result)
+    }
+    abstract protected fun _process(ctx: FrameCtx): Mat
 }

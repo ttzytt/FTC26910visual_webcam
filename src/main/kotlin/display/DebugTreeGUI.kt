@@ -1,7 +1,6 @@
 package org.webcam_visual.display
 
 import DebugImageWindow
-import org.opencv.core.Mat
 import org.webcam_visual.ImgDebuggable
 import java.awt.BorderLayout
 import java.awt.Component

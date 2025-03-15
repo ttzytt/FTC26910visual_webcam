@@ -4,16 +4,18 @@ import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 
 /**
- * Applies a colormap to a floating-point difference image and creates a legend bar
- * for visualization.
+ * Applies an OpenCV colormap to a single-channel floating-point Mat and generates a corresponding legend bar.
  *
- * @param distMat   A CV_32F Mat holding per-pixel distances (e.g., from absdiff).
- * @param colormap  An OpenCV colormap identifier (e.g. Imgproc.COLORMAP_JET).
- * @param barHeight The height (in pixels) of the color bar.
- * @param barWidth  The width (in pixels) of the color bar (default 30).
- * @return a Pair where first = colored difference image, second = color bar legend.
+ * This function normalizes the input matrix to the range [0,255], converts it to 8-bit, and applies the specified colormap.
+ * It then creates a vertical legend bar that visually represents the mapping between intensity values and the resulting colors.
+ *
+ * @param srcMat       A single-channel CV_32F Mat containing the values to be visualized.
+ * @param colormap     An OpenCV colormap identifier (e.g., Imgproc.COLORMAP_JET).
+ * @param legendHeight The height (in pixels) of the legend bar.
+ * @param legendWidth  The width (in pixels) of the legend bar (default 30).
+ * @return A Pair where the first element is the color-mapped image and the second is the generated legend bar.
  */
-fun createColorMappedDiffAndBar(
+fun createColorMappedImageWithLegend(
     distMat: Mat,
     colormap: Int = Imgproc.COLORMAP_JET,
     barHeight: Int = 200,

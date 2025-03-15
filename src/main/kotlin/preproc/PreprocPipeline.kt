@@ -2,6 +2,8 @@ package org.webcam_visual.preproc
 
 import org.opencv.core.Mat
 import org.webcam_visual.ImgDebuggable
+import org.webcam_visual.common.FrameCtx
+import java.awt.Frame
 
 class PreprocPipeline(
     vararg steps: PreprocStep
@@ -27,9 +29,9 @@ class PreprocPipeline(
     }
 
     // Process an image through all steps sequentially.
-    fun process(image: Mat): Mat {
-        dbgData["original"] = image
-        var result = image
+    fun process(ctx: FrameCtx): FrameCtx {
+        dbgData["original"] = ctx.frame
+        var result = ctx.copy()
         for ((idx, step) in steps.withIndex()) {
             result = step.process(result)
         }

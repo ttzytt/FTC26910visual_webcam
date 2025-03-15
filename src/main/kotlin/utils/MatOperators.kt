@@ -63,51 +63,43 @@ operator fun Mat.div(scalar: Scalar): Mat {
 // ---------- In-place assignment operators ----------
 
 // In-place addition: A += B
-operator fun Mat.plusAssign(other: Mat) {
+infix fun Mat.plusAssign(other: Mat) {
     Core.add(this, other, this)
 }
 
 // In-place addition with a scalar: A += scalar
-operator fun Mat.plusAssign(scalar: Scalar) {
+infix fun Mat.plusAssign(scalar: Scalar) {
     Core.add(this, scalar, this)
 }
 
 // In-place subtraction: A -= B
-operator fun Mat.minusAssign(other: Mat) {
+infix fun Mat.minusAssign(other: Mat) {
     Core.subtract(this, other, this)
 }
 
 // In-place subtraction with a scalar: A -= scalar
-operator fun Mat.minusAssign(scalar: Scalar) {
+infix fun Mat.minusAssign(scalar: Scalar) {
     Core.subtract(this, scalar, this)
 }
 
 // In-place multiplication: A *= B
-operator fun Mat.timesAssign(other: Mat) {
-    val result = Mat()
-    Core.multiply(this, other, result)
-    result.copyTo(this)
+infix fun Mat.timesAssign(other: Mat) {
+    Core.multiply(this, other, this)
 }
 
 // In-place multiplication with a scalar: A *= scalar
-operator fun Mat.timesAssign(scalar: Scalar) {
-    val result = Mat()
-    Core.multiply(this, scalar, result)
-    result.copyTo(this)
+infix fun Mat.timesAssign(scalar: Scalar) {
+    Core.multiply(this, scalar, this)
 }
 
 // In-place division: A /= B
-operator fun Mat.divAssign(other: Mat) {
-    val result = Mat()
-    Core.divide(this, other, result)
-    result.copyTo(this)
+infix fun Mat.divAssign(other: Mat) {
+    Core.divide(this, other, this)
 }
 
 // In-place division with a scalar: A /= scalar
-operator fun Mat.divAssign(scalar: Scalar) {
-    val result = Mat()
-    Core.divide(this, scalar, result)
-    result.copyTo(this)
+infix fun Mat.divAssign(scalar: Scalar) {
+    Core.divide(this, scalar, this)
 }
 
 /**
