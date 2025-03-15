@@ -11,6 +11,7 @@ import org.webcam_visual.gui.DebugTreeGUI
 import org.webcam_visual.preproc.BilateralFilterStep
 import org.webcam_visual.preproc.PreprocPipeline
 import org.webcam_visual.preproc.TemporalDenoiserStep
+import org.webcam_visual.tracker.BlockTracker
 import org.webcam_visual.visualizer.BlockVisualizer
 import javax.swing.SwingUtilities
 
@@ -27,10 +28,13 @@ fun main() {
     )
     val detector = ColorDetector(COLOR_DEF_R9000P)
     val visualizer = BlockVisualizer()
+    val tracker = BlockTracker()
+    val trackedVisualizer = BlockVisualizer()
     val rootImgDbg = RootImgDebuggable(
         preprocPipeline,
         detector,
-        visualizer
+        visualizer,
+        trackedVisualizer
     )
 
     val cap = VideoCapture(0)
@@ -53,8 +57,10 @@ fun main() {
         val processed = preprocPipeline.process(ctx)
         val ed = System.currentTimeMillis()
         ctx.prevFrame = processed.frame.clone()
-        val blocks = detector.detectBlocks(processed)
+        var blocks = detector.detectBlocks(processed)
         visualizer.visualizeBlocks(ctx.frame, blocks)
+        blocks = tracker.trackBlocks(ctx, blocks)
+        trackedVisualizer.visualizeBlocks(ctx.frame, blocks)
         println("Processed frame in ${ed - st} ms.")
     }
 
