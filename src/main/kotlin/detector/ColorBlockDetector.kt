@@ -25,10 +25,10 @@ class ColorDetector(
 
     // Internal configuration for the detector.
     data class Cfg(
-        val minContourArea: Double = 1000.0,
+        val minContourArea: Double = 500.0,
         val stdThresholdHsv: HsvColorStats = Triple(40f, 50f, 50f),
         val maskDilateIter: Int = 2,
-        val maskDilateKernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, Size(11.0, 11.0))
+        val maskDilateKernel: Mat = Imgproc.getStructuringElement(Imgproc.MORPH_ELLIPSE, Size(7.0, 7.0))
     )
 
     init {

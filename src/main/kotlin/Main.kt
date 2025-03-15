@@ -33,13 +33,6 @@ fun main() {
         visualizer
     )
 
-
-    // 3) Launch a debug GUI showing the entire pipeline's structure & debug toggles.
-    SwingUtilities.invokeLater {
-        DebugTreeGUI(rootImgDbg)  // The tree GUI for toggling steps & debug options
-    }
-
-    // 5) Open a webcam capture & process frames in a loop.
     val cap = VideoCapture(0)
     if (!cap.isOpened) {
         println("Could not open webcam.")
@@ -48,6 +41,9 @@ fun main() {
 
     val frame = Mat()
     val ctx = FrameCtx(frame)
+    SwingUtilities.invokeLater {
+        DebugTreeGUI(rootImgDbg){frame}  // The tree GUI for toggling steps & debug options
+    }
     while (true) {
         if (!cap.read(frame) || frame.empty()) {
             println("Failed to read frame.")

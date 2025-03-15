@@ -20,7 +20,8 @@ data class FrameCtx(
     var prevFrame: Mat? = null,
     var opticFlow: Mat? = null,
     var warpedByMvec: Mat? = null,
-    var colorDisAfterMvec: Mat? = null
+    var colorDisAfterMvec: Mat? = null,
+    var prevBlocks : List<Block>? = null
 ) {
     /**
      * Ensures that optical flow is computed.
@@ -95,11 +96,4 @@ data class FrameCtx(
         return colorDisAfterMvec!!
     }
 
-    /**
-     * Ensures that the previous frame is available.
-     * In this design, simply returns prevFrame.
-     */
-    fun ensurePrevFrame(): Mat {
-        return prevFrame!!
-    }
 }
