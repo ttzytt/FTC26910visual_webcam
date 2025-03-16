@@ -32,6 +32,9 @@ class RobotVisionPipeline(
         tracker?.let { frameCtx = it.trackBlocks(frameCtx) }
         visualizer?.visualizeBlocks(frameCtx)
         frameCtx.updateFrame(frame)
+        frameCtx.curBlocks?.forEach{
+            it.calcRelative(frame.width(), frame.height())
+        }
         return frameCtx
     }
 }
