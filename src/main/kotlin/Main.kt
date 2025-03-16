@@ -8,10 +8,11 @@ import org.webcam_visual.common.FrameCtx
 import org.webcam_visual.common.RootImgDebuggable
 import org.webcam_visual.detectors.ColorDetector
 import org.webcam_visual.gui.DebugTreeGUI
+import org.webcam_visual.pipeline.RobotVisionPipeline
 import org.webcam_visual.preproc.BilateralFilterStep
 import org.webcam_visual.preproc.PreprocPipeline
 import org.webcam_visual.preproc.TemporalDenoiserStep
-import org.webcam_visual.tracker.BlockTracker
+import org.webcam_visual.tracker.OpticFlowBlockTracker
 import org.webcam_visual.visualizer.BlockVisualizer
 import javax.swing.SwingUtilities
 
@@ -28,14 +29,9 @@ fun main() {
     )
     val detector = ColorDetector(COLOR_DEF_R9000P)
     val visualizer = BlockVisualizer()
-    val tracker = BlockTracker()
+    val tracker = OpticFlowBlockTracker()
     val trackedVisualizer = BlockVisualizer()
-    val rootImgDbg = RootImgDebuggable(
-        preprocPipeline,
-        detector,
-        visualizer,
-        trackedVisualizer
-    )
+    val pipeline = RobotVisionPipeline(preprocPipeline, detector, tracker, visualizer)
 
     val cap = VideoCapture(0)
     if (!cap.isOpened) {
@@ -46,22 +42,14 @@ fun main() {
     val frame = Mat()
     var ctx = FrameCtx(frame)
     SwingUtilities.invokeLater {
-        DebugTreeGUI(rootImgDbg){frame}  // The tree GUI for toggling steps & debug options
+        DebugTreeGUI(pipeline){frame}  // The tree GUI for toggling steps & debug options
     }
     while (true) {
         if (!cap.read(frame) || frame.empty()) {
             println("Failed to read frame.")
             break
         }
-        val st = System.currentTimeMillis()
-        ctx = preprocPipeline.process(ctx)
-        val ed = System.currentTimeMillis()
-        ctx = detector.detectBlocks(ctx)
-        visualizer.visualizeBlocks(ctx)
-        ctx = tracker.trackBlocks(ctx)
-        trackedVisualizer.visualizeBlocks(ctx)
-        ctx.updateFrame(frame.clone())
-        println("Processed frame in ${ed - st} ms.")
+        pipeline.updateFrame(frame)
     }
 
     cap.release()

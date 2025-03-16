@@ -68,6 +68,10 @@ interface ImgDebuggable {
     fun addDbgChildren(children: List<ImgDebuggable>) {
         dbgChildren.addAll(children)
     }
+
+    fun addDbgChildren(vararg children: ImgDebuggable) {
+        dbgChildren.addAll(children)
+    }
 }
 
 
