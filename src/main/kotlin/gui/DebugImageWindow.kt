@@ -1,3 +1,4 @@
+package org.webcam_visual.gui
 import org.opencv.core.Mat
 import java.awt.BorderLayout
 import java.awt.event.ComponentAdapter

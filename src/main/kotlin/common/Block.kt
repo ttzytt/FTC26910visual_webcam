@@ -1,3 +1,4 @@
+package org.webcam_visual.common
 import org.opencv.core.MatOfPoint
 import org.webcam_visual.common.HsvColorRange
 import org.webcam_visual.common.HsvColorStats
