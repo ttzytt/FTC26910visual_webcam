@@ -203,7 +203,6 @@ class ColorBlockDetector(
                 blocks.add(block)
             }
         }
-        println("Detected ${blocks.size} blocks")
         return blocks
     }
 }
