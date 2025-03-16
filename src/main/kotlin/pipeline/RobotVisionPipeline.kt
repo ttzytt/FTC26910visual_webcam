@@ -23,6 +23,9 @@ class RobotVisionPipeline(
     private var frameCtx = FrameCtx(Mat())
 
     fun updateFrame(frame: Mat) : FrameCtx {
+        if (frameCtx.prevFrame == null) {
+            frameCtx = frameCtx.copy(prevFrame=frame)
+        }
         frameCtx = frameCtx.copy(frame=frame)
         preproc?.let { frameCtx = it.process(frameCtx) }
         frameCtx = detector.detectBlocks(frameCtx)
