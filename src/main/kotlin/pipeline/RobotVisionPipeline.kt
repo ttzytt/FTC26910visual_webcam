@@ -20,18 +20,14 @@ class RobotVisionPipeline(
         visualizer?.let { addDbgChild(it) }
     }
 
-    private var frameCtx = FrameCtx(Mat())
+    private var frameCtx = FrameCtx()
 
     fun updateFrame(frame: Mat) : FrameCtx {
-        if (frameCtx.prevFrame == null) {
-            frameCtx = frameCtx.copy(prevFrame=frame)
-        }
-        frameCtx = frameCtx.copy(frame=frame)
-        preproc?.let { frameCtx = it.process(frameCtx) }
+        frameCtx.updateFrame(frame)
+        frameCtx = preproc?.process(frameCtx) ?: frameCtx
         frameCtx = detector.detectBlocks(frameCtx)
         tracker?.let { frameCtx = it.trackBlocks(frameCtx) }
         visualizer?.visualizeBlocks(frameCtx)
-        frameCtx.updateFrame(frame)
         frameCtx.curBlocks?.forEach{
             it.calcRelative(frame.width(), frame.height())
         }
