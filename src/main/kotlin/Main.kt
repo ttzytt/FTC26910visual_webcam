@@ -3,10 +3,10 @@ package org.webcam_visual
 import org.opencv.core.Core
 import org.opencv.core.Mat
 import org.opencv.videoio.VideoCapture
+import org.webcam_visual.common.COLOR_DEF_ARDUCAM
 import org.webcam_visual.common.COLOR_DEF_R9000P
 import org.webcam_visual.common.FrameCtx
-import org.webcam_visual.common.RootImgDebuggable
-import org.webcam_visual.detectors.ColorDetector
+import org.webcam_visual.detectors.ColorBlockDetector
 import org.webcam_visual.gui.DebugTreeGUI
 import org.webcam_visual.pipeline.RobotVisionPipeline
 import org.webcam_visual.preproc.BilateralFilterStep
@@ -25,15 +25,15 @@ fun main() {
 
     val preprocPipeline = PreprocPipeline(
         BilateralFilterStep(11, 50.0, 2.0),
-        TemporalDenoiserStep(0.7, 30.0),
+        TemporalDenoiserStep(0.8, 30.0),
     )
-    val detector = ColorDetector(COLOR_DEF_R9000P)
+    val detector = ColorBlockDetector(COLOR_DEF_ARDUCAM)
     val visualizer = BlockVisualizer()
     val tracker = OpticFlowBlockTracker()
     val trackedVisualizer = BlockVisualizer()
     val pipeline = RobotVisionPipeline(preprocPipeline, detector, tracker, visualizer)
 
-    val cap = VideoCapture(0)
+    val cap = VideoCapture(1)
     if (!cap.isOpened) {
         println("Could not open webcam.")
         return

@@ -35,7 +35,12 @@ class TemporalDenoiserStep(
         }
 
         if (isDbgOptionEnabled("flow")){
-            val flowVis = drawFlowArrows(ctx.ensureOpticFlow(), flowGridStep)
+            val flowVis: Mat
+            try {
+                flowVis = drawFlowArrows(ctx.ensureOpticFlow(), flowGridStep)
+            } catch (e: Exception) {
+                return ctx.opticFlow!!.clone()
+            }
             addDbgEntry("flow", flowVis)
         }
 
